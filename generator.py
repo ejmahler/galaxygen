@@ -9,14 +9,14 @@ from scipy.spatial import cKDTree as KDTree
 bulge_zr = 150
 outer_zr = 50
 
-def generate_galaxy(num_stars, galaxy_radius=2000):
+def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius=2000):
     
     #generate vertices
     star_array = []
     
     #spiral stars
     for i in xrange(int(num_stars*0.65)):
-        star_array.append(create_vertex_spiral(galaxy_radius))
+        star_array.append(create_vertex_spiral(galaxy_radius, arm_count=spiral_arm_count, beta=spiral_tightness))
     
     #inner cluster stars
     for i in xrange(int(num_stars*0.2)):
@@ -85,21 +85,16 @@ def create_vertex_outer(max_radius):
     
     return [x,y,z]
 
-b=0.4
-num_arms=6
-arm_width = 2 * math.pi / num_arms
-def create_vertex_spiral(max_radius):
+def create_vertex_spiral(max_radius, arm_count, beta):
     
     radius_pct = random.betavariate(4, 4)
     radius = radius_pct * max_radius
     
-    base_angle = math.log(radius) / (b)
+    base_angle = math.log(radius) / (beta)
     
     angle_pct = random.betavariate(4, 4)
-    arm_num = random.randint(0,num_arms - 1)
-    arm_angle = (angle_pct + arm_num) * arm_width
-    
-    
+    arm_num = random.randint(0,arm_count - 1)
+    arm_angle = (angle_pct + arm_num) * 2 * math.pi / arm_count
     
     angle = base_angle + arm_angle
     x = math.cos(angle) * radius

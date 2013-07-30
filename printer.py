@@ -7,7 +7,7 @@ from PyQt4.Qt import Qt
 
 
 image_size = 2400
-def print_galaxy(vertices, edges, x_index=0, y_index=1):
+def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
     
     output_image = QImage(image_size, image_size, QImage.Format_ARGB32_Premultiplied)
     output_image.fill(Qt.black)
