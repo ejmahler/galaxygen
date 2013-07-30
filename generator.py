@@ -6,28 +6,26 @@ import pprint
 from scipy.optimize import brentq
 from scipy.spatial import cKDTree as KDTree
 
-inner_r = 0
-outer_r = 2000
 bulge_zr = 150
 outer_zr = 50
 
-def generate_galaxy(num_stars):
+def generate_galaxy(num_stars, galaxy_radius=2000):
     
     #generate vertices
     star_array = []
     
     #spiral stars
     for i in xrange(int(num_stars*0.65)):
-        star_array.append(create_vertex_spiral(inner_r, outer_r))
+        star_array.append(create_vertex_spiral(galaxy_radius))
     
     #inner cluster stars
     for i in xrange(int(num_stars*0.2)):
-        star_array.append(create_vertex_inner(inner_r, outer_r* 0.8))
+        star_array.append(create_vertex_inner(galaxy_radius * 0.8))
     
     
     #outer "spread out" stars
     for i in xrange(int(num_stars*0.15)):
-        star_array.append(create_vertex_outer(inner_r, outer_r * 1.1))
+        star_array.append(create_vertex_outer(galaxy_radius * 1.1))
     
     #generate a KDTree from the star data in order to help with edges
     star_tree = KDTree(star_array)
@@ -52,10 +50,10 @@ def generate_galaxy(num_stars):
     
     return star_array, edge_dict
 
-def create_vertex_inner(inner_radius, outer_radius):
+def create_vertex_inner(max_radius):
     
     radius_pct = random.betavariate(1.5, 6)
-    radius = radius_pct * (outer_radius - inner_radius) + inner_radius
+    radius = radius_pct * max_radius
     
     angle = random.uniform(0, 2 * math.pi)
     
@@ -68,10 +66,10 @@ def create_vertex_inner(inner_radius, outer_radius):
     
     return [x,y,z]
 
-def create_vertex_outer(inner_radius, outer_radius):
+def create_vertex_outer(max_radius):
     
     radius_pct = random.betavariate(4, 4)
-    radius = radius_pct * (outer_radius - inner_radius) + inner_radius
+    radius = radius_pct * max_radius
     
     angle = random.uniform(0, 2 * math.pi)
     
@@ -86,10 +84,10 @@ def create_vertex_outer(inner_radius, outer_radius):
 b=0.4
 num_arms=6
 arm_width = 2 * math.pi / num_arms
-def create_vertex_spiral(inner_radius, outer_radius):
+def create_vertex_spiral(max_radius):
     
     radius_pct = random.betavariate(4, 4)
-    radius = radius_pct * (outer_radius - inner_radius) + inner_radius
+    radius = radius_pct * max_radius
     
     base_angle = math.log(radius) / (b)
     
