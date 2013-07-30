@@ -1,7 +1,7 @@
 
 import json
 
-import generator, printer
+import generator, printer, layout
 
 def main():
     stars, edges = generator.generate_galaxy(
@@ -17,6 +17,8 @@ def main():
     
     '''with open('starData.json', 'w') as datafile:
         json.dump({"stars":stars, "edges":edges}, datafile)'''
+        
+    layout.forced_directed_layout(stars, edges, iterations=1)
     
     printer.print_galaxy(stars, edges, y_index=1, image_size=2400)
 

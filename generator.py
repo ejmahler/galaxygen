@@ -36,10 +36,11 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
     for distances, indexes in zip(distance_data, index_data):
         v1 = indexes[0]
         
+        if(v1 not in edge_dict):
+            edge_dict[v1] = set()
+        
         for distance, v2 in create_edges(zip(distances[1:],indexes[1:])):
             
-            if(v1 not in edge_dict):
-                edge_dict[v1] = set()
             edge_dict[v1].add(v2)
             
             if(v2 not in edge_dict):
@@ -66,7 +67,7 @@ def create_vertex_inner(max_radius, bulge_height):
     max_z = bulge_height*20*radius_pct*(radius_pct - 1)**7
     z = random.triangular(-max_z,max_z, 0)
     
-    return [x,y,z]
+    return (x,y,z)
 
 def create_vertex_outer(max_radius, disk_height):
     
@@ -81,7 +82,7 @@ def create_vertex_outer(max_radius, disk_height):
     max_z = disk_height * math.sqrt(1 - radius_pct)
     z = random.triangular(-max_z,max_z, 0)
     
-    return [x,y,z]
+    return (x,y,z)
 
 def create_vertex_spiral(max_radius, disk_height, arm_count, beta):
     
@@ -101,7 +102,7 @@ def create_vertex_spiral(max_radius, disk_height, arm_count, beta):
     max_z = disk_height * math.sqrt(1 - radius_pct)
     z = random.triangular(-max_z,max_z, 0)
     
-    return [x,y,z]
+    return (x,y,z)
 
 def create_edges(neighbors):
     for i, (distance, v) in enumerate(neighbors):
