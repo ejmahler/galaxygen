@@ -1,7 +1,11 @@
 
 import json
+import cPickle as pickle
 
-def load(filename="stars.json"):
+default_json_filename = 'stars.json'
+default_pickle_filename = 'stars.pickle'
+
+def loadJson(filename):
     with open(filename, 'r') as datafile:
         data = json.load(datafile)
         
@@ -14,7 +18,7 @@ def load(filename="stars.json"):
     
     return star_array, edge_dict
 
-def save(star_array, edge_dict, filename="stars.json"):
+def saveJson(star_array, edge_dict, filename):
     
     #we have to convert the int keys in the edge dict to strings, and we have to convert the values from sets to lists
     edge_output = {}
@@ -24,3 +28,13 @@ def save(star_array, edge_dict, filename="stars.json"):
     with open(filename, 'w') as datafile:
         json.dump({'stars':star_array, 'edges':edge_output}, datafile)
         
+        
+def loadPickle(filename):
+    with open(filename, 'r') as datafile:
+        data = pickle.load(datafile)
+    return data['stars'], data['edges']
+
+def savePickle(star_array, edge_dict, filename):
+    with open(filename, 'w') as datafile:
+        pickle.dump({'stars':star_array, 'edges':edge_dict}, datafile)
+    
