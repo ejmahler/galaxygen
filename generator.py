@@ -48,6 +48,10 @@ def generate_galaxy(num_stars, galaxy_radius=2000):
                 edge_dict[v2] = set()
             edge_dict[v2].add(v1)
     
+    
+    #convert the star array to an array of dictionaries before returning, so other data can be added
+    star_array = [{'position':p} for p in star_array]
+    
     return star_array, edge_dict
 
 def create_vertex_inner(max_radius):
