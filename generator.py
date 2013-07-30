@@ -34,12 +34,14 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
     #for each vertex, randomly add edges to its nearest neighbors
     edge_dict = {}
     for distances, indexes in zip(distance_data, index_data):
-        v1 = indexes[0]
+        v1 = int(indexes[0])
         
         if(v1 not in edge_dict):
             edge_dict[v1] = set()
         
         for distance, v2 in create_edges(zip(distances[1:],indexes[1:])):
+            
+            v2 = int(v2)
             
             edge_dict[v1].add(v2)
             
