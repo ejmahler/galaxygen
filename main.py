@@ -5,7 +5,7 @@ import generator, printer, layout, serialize
 
 def main():
     stars, edges = generator.generate_galaxy(
-        num_stars=5000, 
+        num_stars=500, 
         galaxy_radius=2000, 
         
         spiral_arm_count=6, 

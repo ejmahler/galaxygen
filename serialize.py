@@ -3,7 +3,7 @@ import json
 
 def load(filename="stars.json"):
     with open(filename, 'r') as datafile:
-        data = json.parse(filename)
+        data = json.load(datafile)
         
     star_array = data['stars']
     

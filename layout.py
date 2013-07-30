@@ -4,11 +4,20 @@ This file is responsible for modifying the spatial layout of an existing graph
 Motivations for doing so might be to make the graph more visually appealing, for example
 '''
 
+import argparse
 import math
 from functools import partial
 
-def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=100, attraction_multiplier=1):
-    print "beginning force direction"
+import serialize
+
+#this function runs when the file is run standalone
+def run_iterations_on_file(filename, iterations):
+    star_array, edge_data = serialize.load(filename)
+    forced_directed_layout(star_array, edge_data, iterations=iterations)
+    serialize.save(star_array, edge_data, filename)
+    
+
+def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=10000, attraction_multiplier=1, global_multiplier = .1):
     
     position_array = [v['position'] for v in star_array]
     
@@ -18,22 +27,30 @@ def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier
     #provide the same position array to every vertex
     attraction_func = partial(attract_vertex_spring, vertex_array=position_array, edge_data=edge_data)
     
+    global_func = partial(compute_global_forces, vertex_array=position_array)
+    
     timestep = .1
     
     for i in xrange(iterations):
-        print "iteration %d"%i
         
         #compute repelling forces
         repel_forces = map(repel_func, xrange(len(position_array)))
         
         #compute repelling forces
         attraction_forces = map(attraction_func, xrange(len(position_array)))
+        
+        global_forces = map(global_func, xrange(len(position_array)))
     
         #apply the forces
-        for v_index, repel_force, attract_force in zip(xrange(len(position_array)), repel_forces, attraction_forces):
+        for v_index, repel_force, attract_force, global_force in zip(xrange(len(position_array)), repel_forces, attraction_forces, global_forces):
             results = [0] * 3
             for i in xrange(3):
-                results[i] = position_array[v_index][i] + (repel_force[i] * repel_multiplier + attract_force[i] * attraction_multiplier) * timestep
+                delta_force = repel_force[i] * repel_multiplier + \
+                    attract_force[i] * attraction_multiplier + \
+                    global_force[i] * global_multiplier
+                
+                results[i] = position_array[v_index][i] + delta_force * timestep
+                
             position_array[v_index] = tuple(results)
     
     for star, pos in zip(star_array, position_array):
@@ -90,3 +107,41 @@ def attract_vertex_spring(v_index, vertex_array, edge_data):
         z_force += dz
         
     return x_force, y_force, z_force
+
+def compute_global_forces(v_index, vertex_array):
+    
+    x_force = 0
+    y_force = 0
+    z_force = 0
+    
+    #gently pull this vertex towards the center
+    vx, vy, vz = vertex_array[v_index]
+    
+    distance = math.sqrt(vx*vx + vy*vy + vz*vz)
+    
+    x_force += -vx / distance
+    y_force += -vy / distance
+    z_force += -vz / distance
+    
+    
+    #pull this vertex towards the center disk
+    z_force += -vz
+    
+    return x_force, y_force, z_force
+
+
+if(__name__ == '__main__'):
+    parser = argparse.ArgumentParser('Takes an existing star data set and runs iterations of force layout on them. Can be run on pypy, unlike the rest of the galaxy generator modules')
+    parser.add_argument('-i','--iterations', help="Number of iterations to run", type=int, default=1)
+    parser.add_argument('-f','--filename', help="File name to load and save star data to and from", type=str, default='stars.json')
+    
+    args = parser.parse_args()
+    
+    kwargs = {}
+    if(args.filename is not None):
+        kwargs['filename'] = args.filename
+    if(args.iterations is not None):
+        kwargs['iterations'] = args.iterations
+        
+    run_iterations_on_file(**kwargs)
+    

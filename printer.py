@@ -1,12 +1,25 @@
 
+import argparse
+
 from PyQt4.QtGui import QImage, QPainter, QBrush, QPen
 from PyQt4.QtCore import QPointF
 
 #global enums
 from PyQt4.Qt import Qt
 
+import serialize
 
-image_size = 2400
+def print_galaxy_from_file(filename, edge):
+    star_array, edge_data = serialize.load(filename)
+    
+    if(edge):
+        y_index=2
+    else:
+        y_index=1
+    
+    print_galaxy(star_array, edge_data, y_index=y_index)
+
+
 def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
     
     output_image = QImage(image_size, image_size, QImage.Format_ARGB32_Premultiplied)
@@ -52,3 +65,18 @@ def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
 def find_biggest_coord(vertices):
     return max(max(v['position']) for v in vertices)
 
+
+if(__name__ == '__main__'):
+    parser = argparse.ArgumentParser('Takes an existing star data set and generates an image for it')
+    parser.add_argument('-f','--filename', help="File name to load and save star data to and from", type=str, default='stars.json')
+    parser.add_argument('-e','--edge', help="Print the galaxy edge-on instead of top-down", action='store_true')
+    
+    args = parser.parse_args()
+    
+    kwargs = {}
+    if(args.filename is not None):
+        kwargs['filename'] = args.filename
+    kwargs['edge'] = args.edge == True
+        
+        
+    print_galaxy_from_file(**kwargs)
