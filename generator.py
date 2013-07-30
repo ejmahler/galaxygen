@@ -6,26 +6,24 @@ import pprint
 from scipy.optimize import brentq
 from scipy.spatial import cKDTree as KDTree
 
-bulge_zr = 150
-outer_zr = 50
 
-def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius=2000):
+def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius, bulge_height, disk_height):
     
     #generate vertices
     star_array = []
     
     #spiral stars
     for i in xrange(int(num_stars*0.65)):
-        star_array.append(create_vertex_spiral(galaxy_radius, arm_count=spiral_arm_count, beta=spiral_tightness))
+        star_array.append(create_vertex_spiral(max_radius=galaxy_radius, arm_count=spiral_arm_count, beta=spiral_tightness, disk_height=disk_height))
     
     #inner cluster stars
     for i in xrange(int(num_stars*0.2)):
-        star_array.append(create_vertex_inner(galaxy_radius * 0.8))
+        star_array.append(create_vertex_inner(max_radius=galaxy_radius * 0.8, bulge_height=bulge_height))
     
     
     #outer "spread out" stars
     for i in xrange(int(num_stars*0.15)):
-        star_array.append(create_vertex_outer(galaxy_radius * 1.1))
+        star_array.append(create_vertex_outer(max_radius=galaxy_radius * 1.1, disk_height=disk_height))
     
     #generate a KDTree from the star data in order to help with edges
     star_tree = KDTree(star_array)
@@ -54,7 +52,7 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
     
     return star_array, edge_dict
 
-def create_vertex_inner(max_radius):
+def create_vertex_inner(max_radius, bulge_height):
     
     radius_pct = random.betavariate(1.5, 6)
     radius = radius_pct * max_radius
@@ -65,12 +63,12 @@ def create_vertex_inner(max_radius):
     y = math.sin(angle) * radius
     
     
-    max_z = bulge_zr*20*radius_pct*(radius_pct - 1)**7
+    max_z = bulge_height*20*radius_pct*(radius_pct - 1)**7
     z = random.triangular(-max_z,max_z, 0)
     
     return [x,y,z]
 
-def create_vertex_outer(max_radius):
+def create_vertex_outer(max_radius, disk_height):
     
     radius_pct = random.betavariate(4, 4)
     radius = radius_pct * max_radius
@@ -80,12 +78,12 @@ def create_vertex_outer(max_radius):
     x = math.cos(angle) * radius
     y = math.sin(angle) * radius
     
-    max_z = outer_zr * math.sqrt(1 - radius_pct)
+    max_z = disk_height * math.sqrt(1 - radius_pct)
     z = random.triangular(-max_z,max_z, 0)
     
     return [x,y,z]
 
-def create_vertex_spiral(max_radius, arm_count, beta):
+def create_vertex_spiral(max_radius, disk_height, arm_count, beta):
     
     radius_pct = random.betavariate(4, 4)
     radius = radius_pct * max_radius
@@ -100,7 +98,7 @@ def create_vertex_spiral(max_radius, arm_count, beta):
     x = math.cos(angle) * radius
     y = math.sin(angle) * radius
     
-    max_z = outer_zr * math.sqrt(1 - radius_pct)
+    max_z = disk_height * math.sqrt(1 - radius_pct)
     z = random.triangular(-max_z,max_z, 0)
     
     return [x,y,z]
