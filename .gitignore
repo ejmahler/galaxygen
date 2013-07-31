@@ -37,3 +37,4 @@ nosetests.xml
 #custom stuff
 *.png
 *.json
+*.kate-swp
