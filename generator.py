@@ -57,7 +57,7 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
 
 def create_vertex_inner(max_radius, bulge_height):
     
-    radius_pct = random.betavariate(1.5, 6)
+    radius_pct = random.betavariate(1.5, 4)
     radius = radius_pct * max_radius
     
     angle = random.uniform(0, 2 * math.pi)

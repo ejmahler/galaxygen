@@ -4,18 +4,10 @@ This file is responsible for modifying the spatial layout of an existing graph
 Motivations for doing so might be to make the graph more visually appealing, for example
 '''
 
-import argparse
 import math
 from functools import partial
 
 import serialize
-
-#this function runs when the file is run standalone
-def run_iterations_on_file(filename, iterations):
-    star_array, edge_data = serialize.load(filename)
-    forced_directed_layout(star_array, edge_data, iterations=iterations)
-    serialize.save(star_array, edge_data, filename)
-    
 
 def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=10000, attraction_multiplier=1, global_multiplier = .1):
     
@@ -30,8 +22,13 @@ def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier
     global_func = partial(compute_global_forces, vertex_array=position_array)
     
     timestep = .1
+    printstep = int((100.0 / (len(star_array)**2)) * 1000.0) or 1
     
     for i in xrange(iterations):
+        
+        if(i > 0 and i % printstep == 0):
+            pct = float(i + 1) / iterations
+            print "%d%%"%(round(pct*100,0))
         
         #compute repelling forces
         repel_forces = map(repel_func, xrange(len(position_array)))
@@ -73,12 +70,13 @@ def repel_vertex_charge(v_index, vertex_array):
             dy = vy - ny
             dz = vz - nz
             
-            inv_distance_sq = 1/(dx*dx + dy*dy + dz*dz)
-            inv_distance = math.sqrt(inv_distance_sq)
+            distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+            if(distance < 1):
+                distance = 1
             
             #normalize by dividing by distance (multiplying by inv distance)
             #then divide by distance squared (multiply by inv_distance_sq) to get the force
-            multiplier = inv_distance * inv_distance_sq
+            multiplier = 1 / (distance * distance * distance)
             x_force += dx * multiplier
             y_force += dy * multiplier
             z_force += dz * multiplier
@@ -128,20 +126,3 @@ def compute_global_forces(v_index, vertex_array):
     z_force += -vz
     
     return x_force, y_force, z_force
-
-
-if(__name__ == '__main__'):
-    parser = argparse.ArgumentParser('Takes an existing star data set and runs iterations of force layout on them. Can be run on pypy, unlike the rest of the galaxy generator modules')
-    parser.add_argument('-i','--iterations', help="Number of iterations to run", type=int, default=1)
-    parser.add_argument('-f','--filename', help="File name to load and save star data to and from", type=str, default='stars.json')
-    
-    args = parser.parse_args()
-    
-    kwargs = {}
-    if(args.filename is not None):
-        kwargs['filename'] = args.filename
-    if(args.iterations is not None):
-        kwargs['iterations'] = args.iterations
-        
-    run_iterations_on_file(**kwargs)
-    
