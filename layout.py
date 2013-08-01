@@ -27,7 +27,7 @@ def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier
     for i in xrange(iterations):
         
         if(i > 0 and i % printstep == 0):
-            pct = float(i + 1) / iterations
+            pct = float(i) / iterations
             print "%d%%"%(round(pct*100,0))
         
         #compute repelling forces
@@ -49,6 +49,9 @@ def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier
                 results[i] = position_array[v_index][i] + delta_force * timestep
                 
             position_array[v_index] = tuple(results)
+            
+    if(printstep < iterations):
+        print "100%"
     
     for star, pos in zip(star_array, position_array):
         star['position'] = pos
@@ -71,8 +74,8 @@ def repel_vertex_charge(v_index, vertex_array):
             dz = vz - nz
             
             distance = math.sqrt(dx*dx + dy*dy + dz*dz)
-            if(distance < 1):
-                distance = 1
+            if(distance < 3):
+                distance = 3
             
             #normalize by dividing by distance (multiplying by inv distance)
             #then divide by distance squared (multiply by inv_distance_sq) to get the force

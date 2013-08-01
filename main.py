@@ -1,5 +1,6 @@
 
 import argparse
+import datetime
 import json
 
 
@@ -8,6 +9,7 @@ import serialize
 def main(options):
     import generator, printer
     
+    print "Generating galaxy..."
     stars, edges = generator.generate_galaxy(
         num_stars=5000, 
         galaxy_radius=2000, 
@@ -19,9 +21,10 @@ def main(options):
         bulge_height=150
         )
     
-        
+    print "Saving data..."
     serialize.save(stars, edges, options.filename)
     
+    print "Rendering..."
     printer.print_galaxy(stars, edges, y_index=1, image_size=2400)
     
     
@@ -29,10 +32,13 @@ def main(options):
 def run_layout(options):
     import layout
     
+    print "Loading data..."
     star_array, edge_data = serialize.load(options.filename)
     
+    print "Running layout..."
     layout.forced_directed_layout(star_array, edge_data, iterations=options.iterations)
     
+    print "Saving data..."
     serialize.save(star_array, edge_data, options.filename)
     
     
@@ -41,6 +47,7 @@ def run_layout(options):
 def run_render(options):
     import printer
     
+    print "Loading data..."
     star_array, edge_data = serialize.load(options.filename)
     
     if(options.edge):
@@ -48,6 +55,7 @@ def run_render(options):
     else:
         y_index=1
     
+    print "Rendering..."
     printer.print_galaxy(star_array, edge_data, y_index=y_index)
     
     
@@ -71,4 +79,9 @@ if(__name__ == '__main__'):
     render_parser.set_defaults(func=run_render)
     
     args = parser.parse_args()
+    
+    start = datetime.datetime.now()
     args.func(args)
+    end = datetime.datetime.now()
+    
+    print "Completed in %s"%str(end - start)
