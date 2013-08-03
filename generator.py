@@ -3,6 +3,10 @@ import math
 import random
 import pprint
 
+import numpy
+
+from scipy.sparse import dok_matrix
+from scipy.sparse import csgraph
 from scipy.optimize import brentq
 from scipy.spatial import cKDTree as KDTree
 
@@ -48,9 +52,13 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
                 edge_dict[v2] = set()
             edge_dict[v2].add(v1)
     
+    #remove disconnected components from the graph
+    star_array, edge_dict = remove_diconnected_stars(star_array, edge_dict)
     
     #convert the star array to an array of dictionaries before returning, so other data can be added
     star_array = [{'position':p} for p in star_array]
+    
+    print len(star_array)
     
     return star_array, edge_dict
 
@@ -110,7 +118,7 @@ def create_edges(neighbors):
     
     for i, (distance, v) in enumerate(neighbors):
         if(distance != inf):
-            num = random.betavariate(i + 1, 2.35)
+            num = random.betavariate(i + 1, 2.1)
             
             if(num < (0.5)):
                 yield (distance,v)
@@ -118,3 +126,72 @@ def create_edges(neighbors):
             
     return
     yield
+
+
+def remove_diconnected_stars(position_array, edge_dict):
+    
+    #build an adjacency matrix using the scipy sparse matrix library.
+    #the scipy docs recommend using dok_matrix for incrementally building a matrix like this
+    mat_size = len(edge_dict)
+    mat = dok_matrix( (mat_size,mat_size), dtype=numpy.int8)
+    
+    for v, neighbors in edge_dict.iteritems():
+        for n in neighbors:
+            mat[v,n] = 1
+            
+    #compute the connected components
+    n, component_array = csgraph.connected_components(mat)
+    
+    #group the vertices into their components
+    component_group = dict()
+    for v, group in enumerate(component_array):
+        if(group not in component_group):
+            component_group[group] = []
+        component_group[group].append(v)
+        
+        
+    #sort the components by size
+    sorted_components = sorted((len(component), component) for component in component_group.itervalues())
+    
+    #put the elements of every component but the last into the disconnection set. the last component is the largest.
+    disconnection_set = set()
+    for size,vertices in sorted_components[:-1]:
+        disconnection_set.update(vertices)
+        
+    #remove stars in the disconnection set and convert the star array to an array of dictionaries before returning, so other data can be added
+    index_map = {}
+    result_array = []
+    for i, p in enumerate(position_array):
+        if(i not in disconnection_set):
+            index_map[i] = len(result_array)
+            result_array.append(p)
+            
+    #use the index map to convert old indexes to new indexes in the edge dict
+    new_edge_dict = {}
+    for v, neighbors in edge_dict.iteritems():
+        
+        if(v not in disconnection_set):
+            new_v = index_map[v]
+            
+            if(new_v not in new_edge_dict):
+                new_edge_dict[new_v] = set()
+            
+            for n in neighbors:
+                new_n = index_map[n]
+                new_edge_dict[new_v].add(new_n)
+            
+    return result_array, new_edge_dict
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
