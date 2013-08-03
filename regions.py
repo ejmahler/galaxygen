@@ -2,9 +2,6 @@
 This file is responsible for grouping an existing galaxy into constellations and regions
 '''
 
-from itertools import izip
-
-
 #use the iterative kerningham-lin modularity algorithm
 def compute_regions(star_data, edge_data, constellation_iterations=2, region_iterations=4):
     if(region_iterations < constellation_iterations):
