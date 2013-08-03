@@ -9,7 +9,7 @@ from functools import partial
 
 import serialize
 
-def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=100000, attraction_multiplier=1, global_multiplier = .1):
+def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=30000, attraction_multiplier=1, global_multiplier = .1):
     
     position_array = [v['position'] for v in star_array]
     region_array = [v['region'] for v in star_array]
@@ -75,8 +75,8 @@ def repel_vertex_charge(v_index, vertex_array):
             dz = vz - nz
             
             distance = math.sqrt(dx*dx + dy*dy + dz*dz)
-            if(distance < 20):
-                distance = 20
+            if(distance < 10):
+                distance = 10
             
             #normalize by dividing by distance (multiplying by inv distance)
             #then divide by distance squared (multiply by inv_distance_sq) to get the force
@@ -136,6 +136,6 @@ def compute_global_forces(v_index, vertex_array):
     
     
     #pull this vertex towards the center disk
-    z_force += -vz
+    z_force += -vz * 3
     
     return x_force, y_force, z_force
