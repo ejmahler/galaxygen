@@ -11,11 +11,11 @@ def main(options):
     
     print "Generating galaxy..."
     stars, edges = generator.generate_galaxy(
-        num_stars=5000, 
+        num_stars=4000, 
         galaxy_radius=2000, 
         
         spiral_arm_count=6, 
-        spiral_tightness=0.4, 
+        spiral_tightness=.5, 
         
         disk_height=50, 
         bulge_height=150

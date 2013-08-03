@@ -9,15 +9,16 @@ from functools import partial
 
 import serialize
 
-def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=10000, attraction_multiplier=1, global_multiplier = .1):
+def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=100000, attraction_multiplier=1, global_multiplier = .1):
     
     position_array = [v['position'] for v in star_array]
+    region_array = [v['region'] for v in star_array]
     
     #provide the same position array to every vertex
     repel_func = partial(repel_vertex_charge, vertex_array=position_array)
     
     #provide the same position array to every vertex
-    attraction_func = partial(attract_vertex_spring, vertex_array=position_array, edge_data=edge_data)
+    attraction_func = partial(attract_vertex_spring, vertex_array=position_array, region_array=region_array, edge_data=edge_data)
     
     global_func = partial(compute_global_forces, vertex_array=position_array)
     
@@ -74,8 +75,8 @@ def repel_vertex_charge(v_index, vertex_array):
             dz = vz - nz
             
             distance = math.sqrt(dx*dx + dy*dy + dz*dz)
-            if(distance < 3):
-                distance = 3
+            if(distance < 20):
+                distance = 20
             
             #normalize by dividing by distance (multiplying by inv distance)
             #then divide by distance squared (multiply by inv_distance_sq) to get the force
@@ -87,7 +88,7 @@ def repel_vertex_charge(v_index, vertex_array):
     return x_force, y_force, z_force
 
 #compute all the attracting forces for this vertex as if it was attached to its neighbors by springs
-def attract_vertex_spring(v_index, vertex_array, edge_data):
+def attract_vertex_spring(v_index, vertex_array, region_array, edge_data):
     
     x_force = 0
     y_force = 0
@@ -95,7 +96,10 @@ def attract_vertex_spring(v_index, vertex_array, edge_data):
     
     vx,vy,vz = vertex_array[v_index]
     
+    vc = region_array[v_index]
+    
     for neighbor in edge_data[v_index]:
+        nc = region_array[neighbor]
         
         nx, ny, nz = vertex_array[neighbor]
         
@@ -103,9 +107,15 @@ def attract_vertex_spring(v_index, vertex_array, edge_data):
         dy = ny - vy
         dz = nz - vz
         
-        x_force += dx
-        y_force += dy
-        z_force += dz
+        #if these two vertices are in diffrent regions, only attract at 5% strength
+        if(vc != nc):
+            x_force += dx * .05
+            y_force += dy * .05
+            z_force += dz * .05
+        else:
+            x_force += dx
+            y_force += dy
+            z_force += dz
         
     return x_force, y_force, z_force
 

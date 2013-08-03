@@ -17,7 +17,7 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
         star_array.append(create_vertex_spiral(max_radius=galaxy_radius, arm_count=spiral_arm_count, beta=spiral_tightness, disk_height=disk_height))
     
     #inner cluster stars
-    for i in xrange(int(num_stars*0.2)):
+    for i in xrange(int(num_stars*0.15)):
         star_array.append(create_vertex_inner(max_radius=galaxy_radius * 0.8, bulge_height=bulge_height))
     
     #outer "spread out" stars
@@ -110,7 +110,7 @@ def create_edges(neighbors):
     
     for i, (distance, v) in enumerate(neighbors):
         if(distance != inf):
-            num = random.betavariate(i + 1, 2.6)
+            num = random.betavariate(i + 1, 2.35)
             
             if(num < (0.5)):
                 yield (distance,v)
