@@ -3,11 +3,11 @@ galaxygen
 
 Randomly generate an EVE Online-esque galaxy using Python
 
-Prerequisites
+Dependencies
 -------------
 Python 2.7
 
-numpy, scipy (for graph algorithms)
+numpy, scipy, networkx (for graph algorithms)
 
 PyQt4 (to generate the galaxy image)
 

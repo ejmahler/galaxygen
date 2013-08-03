@@ -1,15 +1,22 @@
 
 import random
 
-from PyQt4.QtGui import QImage, QPainter, QBrush, QPen, QColor,  qRgb
-from PyQt4.QtCore import QPointF
+import numpy
 
-#global enums
+from PyQt4.QtGui import QImage, QPainter, QBrush, QPen, QColor, QLinearGradient, qRgb
+from PyQt4.QtCore import QPointF
 from PyQt4.Qt import Qt
 
 import serialize
+from utils import gradient
 
-def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
+def print_galaxy(vertices, edges, edge=False, image_size=3200, color_type='region'):
+    
+    #parse options
+    x_index = 0
+    y_index = 1
+    if(edge):
+        y_index = 1
     
     output_image = QImage(image_size, image_size, QImage.Format_ARGB32_Premultiplied)
     output_image.fill(Qt.black)
@@ -39,11 +46,9 @@ def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
             painter.drawLine(x1,y1,x2,y2)
     
     
-    
-    
     #draw all vertices
     for v in vertices:
-        vertex_color = color_for_group(v['region'])
+        vertex_color = get_color(v, color_type)
         
         painter.setPen(vertex_color)
         painter.setBrush(QBrush(vertex_color))
@@ -58,11 +63,48 @@ def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
 def find_biggest_coord(vertices):
     return max(max(v['position']) for v in vertices)
 
+
+
+
+
+def get_color(v, color_type):
+    if(color_type == 'region'):
+        return color_for_group(v['region'])
+    elif(color_type == 'security'):
+        return color_for_normalized_float(0.6)
+    elif(color_type == 'betweenness'):
+        return color_for_normalized_float(v['betweenness'])
+
+
 def color_for_group(group):
-    random.seed(group * group + group + 17)
+    random.seed(group * group + 2*group + 17)
     
     return QColor(qRgb(
         random.randint(64, 255),
         random.randint(64, 255),
         random.randint(64, 255),
         ))
+    
+#input: float between 0 and 1
+#output: color, smoothly going from red to yellow to green to cyan
+gradient = gradient.Gradient()
+gradient.add_entry(0.0, numpy.array([255, 0, 0], dtype=numpy.float32))
+gradient.add_entry(0.5, numpy.array([255, 255, 0], dtype=numpy.float32))
+gradient.add_entry(0.75, numpy.array([0, 255, 0], dtype=numpy.float32))
+gradient.add_entry(1.0, numpy.array([0, 255, 255], dtype=numpy.float32))
+
+def color_for_normalized_float(val):
+    r,g,b = tuple(gradient.interpolate(val))
+    return QColor(qRgb(r,g,b))
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

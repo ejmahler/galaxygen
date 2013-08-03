@@ -7,11 +7,11 @@ import json
 import serialize
 
 def main(options):
-    import generator, printer, regions
+    import generator, printer, regions, centrality
     
     print "Generating galaxy..."
-    stars, edges = generator.generate_galaxy(
-        num_stars=4000, 
+    star_array, edge_data = generator.generate_galaxy(
+        num_stars=6000, 
         galaxy_radius=2000, 
         
         spiral_arm_count=6, 
@@ -22,26 +22,23 @@ def main(options):
         )
     
     print "Computing regions..."
-    regions.compute_regions(stars, edges)
+    regions.compute_regions(star_array, edge_data)
     
-    print "Saving data..."
-    serialize.save(stars, edges, options.filename)
+    serialize.save(star_array, edge_data, options.filename)
     
     print "Rendering..."
-    printer.print_galaxy(stars, edges, y_index=1, image_size=2400)
+    printer.print_galaxy(star_array, edge_data)
     
     
     
 def run_layout(options):
     import layout
     
-    print "Loading data..."
     star_array, edge_data = serialize.load(options.filename)
     
     print "Running layout..."
     layout.forced_directed_layout(star_array, edge_data, iterations=options.iterations)
     
-    print "Saving data..."
     serialize.save(star_array, edge_data, options.filename)
     
     
@@ -50,36 +47,43 @@ def run_layout(options):
 def run_render(options):
     import printer
     
-    print "Loading data..."
     star_array, edge_data = serialize.load(options.filename)
     
-    if(options.edge):
-        y_index=2
-    else:
-        y_index=1
-    
     print "Rendering..."
-    printer.print_galaxy(star_array, edge_data, y_index=y_index)
+    printer.print_galaxy(star_array, edge_data, edge=options.edge or False, image_size = options.size, color_type=options.color)
     
     
 def run_regions(options):
     import regions
     import printer
     
-    print "Loading data..."
     star_array, edge_data = serialize.load(options.filename)
     
     print "Computing regions..."
     regions.compute_regions(star_array, edge_data)
     
-    print "Saving data..."
     serialize.save(star_array, edge_data, options.filename)
     
     print "Rendering..."
-    printer.print_galaxy(star_array, edge_data, y_index=1, image_size=2400)
+    printer.print_galaxy(star_array, edge_data)
+    
+
+def run_centrality(options):
+    import centrality
+    import printer
+    
+    star_array, edge_data = serialize.load(options.filename)
+    
+    print "Computing centrality..."
+    centrality.compute_centrality(star_array, edge_data)
+    
+    serialize.save(star_array, edge_data, options.filename)
+    
+    print "Rendering..."
+    printer.print_galaxy(star_array, edge_data)
+    
     
 def run_json(options):
-    print "Loading data..."
     star_array, edge_data = serialize.load(options.filename)
     
     print "Writing json..."
@@ -92,19 +96,24 @@ if(__name__ == '__main__'):
     
     subparsers = parser.add_subparsers(title="Subcommands")
     
-    layout_parser = subparsers.add_parser('main', help='Generates a new galaxy, renders it, and serializes it')
-    layout_parser.set_defaults(func=main)
+    main_parser = subparsers.add_parser('main', help='Generates a new galaxy, renders it, and serializes it')
+    main_parser.set_defaults(func=main)
     
     layout_parser = subparsers.add_parser('layout', help='Takes an existing star data set and runs iterations of force layout on them. Can be run on pypy, unlike the rest of the galaxy generator modules')
     layout_parser.add_argument('-i','--iterations', help="Number of iterations to run", type=int, default=1)
     layout_parser.set_defaults(func=run_layout)
     
     render_parser = subparsers.add_parser('render', help='Takes an existing star data set and generates an image for it')
-    render_parser.add_argument('-e','--edge', help="Print the galaxy edge-on instead of top-down", action='store_true')
+    render_parser.add_argument('-e','--edge', help="Print the galaxy edge-on instead of top-down", action='store_true', default=False)
+    render_parser.add_argument('-c','--color', help="Chooses which measure to use to color each star", type=str, default='region',choices=['security','region','betweenness'])
+    render_parser.add_argument('-s','--size', help="Width and height of the resulting image, in pixels", type=int, default=3200)
     render_parser.set_defaults(func=run_render)
     
     region_parser = subparsers.add_parser('region', help='Takes an existing star data set and computes regions for it')
     region_parser.set_defaults(func=run_regions)
+    
+    centrality_parser = subparsers.add_parser('centrality', help='Takes an existing star data set and computes centrality data for it')
+    centrality_parser.set_defaults(func=run_centrality)
     
     json_parser = subparsers.add_parser('tojson', help='Takes an existing star data set and converts it to json format')
     json_parser.add_argument('-o','--output', help="The file to write the json to", type=str, default=serialize.default_json_filename)
