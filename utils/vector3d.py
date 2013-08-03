@@ -11,8 +11,8 @@ import math
 #we're not using namedtuple here because this is a really performance-heavy class and namedtuple adds a ton of overhead
 #switching from namedtuple to tuple cut the runtime of the layout algorithm in half
 class Vector3D(tuple):
-    def __new__(cls, *args):
-        return tuple.__new__(cls,args)
+    def __new__(cls, x,y,z):
+        return tuple.__new__(cls,(x,y,z))
         
     def __add__(self, other):
         return Vector3D(self[0] + other[0], self[1] + other[1], self[2] + other[2])
