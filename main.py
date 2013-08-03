@@ -7,7 +7,7 @@ import json
 import serialize
 
 def main(options):
-    import generator, printer
+    import generator, printer, regions
     
     print "Generating galaxy..."
     stars, edges = generator.generate_galaxy(
@@ -20,6 +20,9 @@ def main(options):
         disk_height=50, 
         bulge_height=150
         )
+    
+    print "Computing regions..."
+    regions.compute_regions(stars, edges)
     
     print "Saving data..."
     serialize.save(stars, edges, options.filename)
@@ -59,6 +62,23 @@ def run_render(options):
     printer.print_galaxy(star_array, edge_data, y_index=y_index)
     
     
+def run_regions(options):
+    import regions
+    import printer
+    
+    print "Loading data..."
+    star_array, edge_data = serialize.load(options.filename)
+    
+    print "Computing regions..."
+    regions.compute_regions(star_array, edge_data)
+    
+    print "Saving data..."
+    serialize.save(star_array, edge_data, options.filename)
+    
+    print "Rendering..."
+    printer.print_galaxy(star_array, edge_data, y_index=1, image_size=2400)
+    
+    
     
 
 if(__name__ == '__main__'):
@@ -77,6 +97,9 @@ if(__name__ == '__main__'):
     render_parser = subparsers.add_parser('render', help='Takes an existing star data set and generates an image for it')
     render_parser.add_argument('-e','--edge', help="Print the galaxy edge-on instead of top-down", action='store_true')
     render_parser.set_defaults(func=run_render)
+    
+    region_parser = subparsers.add_parser('region', help='Takes an existing star data set and computes regions for it')
+    region_parser.set_defaults(func=run_regions)
     
     args = parser.parse_args()
     

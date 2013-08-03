@@ -1,5 +1,7 @@
 
-from PyQt4.QtGui import QImage, QPainter, QBrush, QPen
+import random
+
+from PyQt4.QtGui import QImage, QPainter, QBrush, QPen, QColor,  qRgb
 from PyQt4.QtCore import QPointF
 
 #global enums
@@ -37,11 +39,15 @@ def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
             painter.drawLine(x1,y1,x2,y2)
     
     
-    painter.setPen(Qt.red)
-    painter.setBrush(QBrush(Qt.red))
+    
     
     #draw all vertices
     for v in vertices:
+        vertex_color = color_for_group(v['region'])
+        
+        painter.setPen(vertex_color)
+        painter.setBrush(QBrush(vertex_color))
+        
         center = QPointF(v['position'][x_index],v['position'][y_index])
         
         painter.drawEllipse(center, 5,5)
@@ -51,3 +57,12 @@ def print_galaxy(vertices, edges, x_index=0, y_index=1, image_size=2400):
     
 def find_biggest_coord(vertices):
     return max(max(v['position']) for v in vertices)
+
+def color_for_group(group):
+    random.seed(group * group + group + 17)
+    
+    return QColor(qRgb(
+        random.randint(64, 255),
+        random.randint(64, 255),
+        random.randint(64, 255),
+        ))

@@ -20,9 +20,8 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
     for i in xrange(int(num_stars*0.2)):
         star_array.append(create_vertex_inner(max_radius=galaxy_radius * 0.8, bulge_height=bulge_height))
     
-    
     #outer "spread out" stars
-    for i in xrange(int(num_stars*0.15)):
+    while(len(star_array) < num_stars):
         star_array.append(create_vertex_outer(max_radius=galaxy_radius * 0.9, disk_height=disk_height))
     
     #generate a KDTree from the star data in order to help with edges
@@ -31,7 +30,7 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
     #compute the nearest neighbors for each vertex
     distance_data, index_data = star_tree.query(star_array, k=20, eps=0.1)
     
-     #for each vertex, randomly add edges to its nearest neighbors
+    #for each vertex, randomly add edges to its nearest neighbors
     edge_dict = {}
     for distances, indexes in zip(distance_data, index_data):
         v1 = int(indexes[0])
@@ -107,12 +106,15 @@ def create_vertex_spiral(max_radius, disk_height, arm_count, beta):
     return (x,y,z)
 
 def create_edges(neighbors):
+    inf = float('inf')
+    
     for i, (distance, v) in enumerate(neighbors):
-        num = random.betavariate(i + 1, 2.6)
-        
-        if(num < (0.5)):
-            yield (distance,v)
-            pass
+        if(distance != inf):
+            num = random.betavariate(i + 1, 2.6)
+            
+            if(num < (0.5)):
+                yield (distance,v)
+                pass
             
     return
     yield
