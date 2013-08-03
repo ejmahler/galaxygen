@@ -78,12 +78,17 @@ def run_regions(options):
     print "Rendering..."
     printer.print_galaxy(star_array, edge_data, y_index=1, image_size=2400)
     
+def run_json(options):
+    print "Loading data..."
+    star_array, edge_data = serialize.load(options.filename)
     
+    print "Writing json..."
+    serialize.save_json(star_array, edge_data, options.output)
     
 
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser('Functions for randomly generating a galaxy similar to the one in EVE Online')
-    parser.add_argument('-f','--filename', help="File name to load and save star data to and from", type=str, default=serialize.default_json_filename)
+    parser.add_argument('-f','--filename', help="Pickle file to load and save star data to and from", type=str, default=serialize.default_pickle_filename)
     
     subparsers = parser.add_subparsers(title="Subcommands")
     
@@ -100,6 +105,10 @@ if(__name__ == '__main__'):
     
     region_parser = subparsers.add_parser('region', help='Takes an existing star data set and computes regions for it')
     region_parser.set_defaults(func=run_regions)
+    
+    json_parser = subparsers.add_parser('tojson', help='Takes an existing star data set and converts it to json format')
+    json_parser.add_argument('-o','--output', help="The file to write the json to", type=str, default=serialize.default_json_filename)
+    json_parser.set_defaults(func=run_json)
     
     args = parser.parse_args()
     
