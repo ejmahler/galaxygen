@@ -12,10 +12,11 @@ import math
 from functools import partial
 
 import serialize
+from utils.vector3d import Vector3D
 
 def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier=30000, attraction_multiplier=1, global_multiplier = .1):
     
-    position_array = [v['position'] for v in star_array]
+    position_array = [Vector3D(*(v['position'])) for v in star_array]
     region_array = [v['region'] for v in star_array]
     
     #provide the same position array to every vertex
@@ -45,101 +46,72 @@ def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier
     
         #apply the forces
         for v_index, repel_force, attract_force, global_force in zip(xrange(len(position_array)), repel_forces, attraction_forces, global_forces):
-            results = [0] * 3
-            for i in xrange(3):
-                delta_force = repel_force[i] * repel_multiplier + \
-                    attract_force[i] * attraction_multiplier + \
-                    global_force[i] * global_multiplier
-                
-                results[i] = position_array[v_index][i] + delta_force * timestep
-                
-            position_array[v_index] = tuple(results)
+            position_array[v_index] += (repel_force * repel_multiplier + attract_force * attraction_multiplier + global_force * global_multiplier) * timestep
             
     if(printstep < iterations):
         print "100%"
     
     for star, pos in zip(star_array, position_array):
-        star['position'] = pos
+        star['position'] = tuple(pos)
     
     
 
 #compute all the repelling forces for this vertex as if they were all electrically charged particles
 def repel_vertex_charge(v_index, vertex_array):
     
-    x_force = 0
-    y_force = 0
-    z_force = 0
+    total_force = Vector3D(0,0,0)
     
-    vx,vy,vz = vertex_array[v_index]
+    pos = vertex_array[v_index]
     
-    for index, (nx,ny,nz) in enumerate(vertex_array):
+    for index, neighbor_pos in enumerate(vertex_array):
         if(index != v_index):
-            dx = vx - nx
-            dy = vy - ny
-            dz = vz - nz
+            displacement = pos - neighbor_pos
             
-            distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+            distance = math.sqrt(displacement.length_sq())
+            
+            #prevent distance from getting too large, otherwise you get vertices shooting away from each other at the start if they're too close
             if(distance < 10):
                 distance = 10
             
-            #normalize by dividing by distance (multiplying by inv distance)
-            #then divide by distance squared (multiply by inv_distance_sq) to get the force
+            #normalize by dividing by distance
+            #then apply force proportinal to the inverse square of the distance (divide by distance * distance)
             multiplier = 1 / (distance * distance * distance)
-            x_force += dx * multiplier
-            y_force += dy * multiplier
-            z_force += dz * multiplier
+            total_force += displacement * multiplier
         
-    return x_force, y_force, z_force
+    return total_force
 
 #compute all the attracting forces for this vertex as if it was attached to its neighbors by springs
 def attract_vertex_spring(v_index, vertex_array, region_array, edge_data):
     
-    x_force = 0
-    y_force = 0
-    z_force = 0
+    total_force = Vector3D(0,0,0)
     
-    vx,vy,vz = vertex_array[v_index]
-    
+    pos = vertex_array[v_index]
     vc = region_array[v_index]
     
     for neighbor in edge_data[v_index]:
         nc = region_array[neighbor]
         
-        nx, ny, nz = vertex_array[neighbor]
+        neighbor_pos = vertex_array[neighbor]
         
-        dx = nx - vx
-        dy = ny - vy
-        dz = nz - vz
+        displacement = neighbor_pos - pos
         
         #if these two vertices are in diffrent regions, only attract at 5% strength
         if(vc != nc):
-            x_force += dx * .05
-            y_force += dy * .05
-            z_force += dz * .05
+            total_force += displacement * 0.5
         else:
-            x_force += dx
-            y_force += dy
-            z_force += dz
+            total_force += displacement
         
-    return x_force, y_force, z_force
+    return total_force
 
 def compute_global_forces(v_index, vertex_array):
-    
-    x_force = 0
-    y_force = 0
-    z_force = 0
-    
+        
     #gently pull this vertex towards the center
-    vx, vy, vz = vertex_array[v_index]
+    pos_vector = vertex_array[v_index]
+    center_force = pos_vector.normalized() * -1
     
-    distance = math.sqrt(vx*vx + vy*vy + vz*vz)
+    #pull this vertex towards the ecliptic
+    ecliptic_force = Vector3D(0, 0, pos_vector[2] * -100)
     
-    x_force += -vx / distance
-    y_force += -vy / distance
-    z_force += -vz / distance
-    
-    
-    #pull this vertex towards the center disk
-    z_force += -vz * 100
-    
-    return x_force, y_force, z_force
+    return center_force + ecliptic_force
+
+
