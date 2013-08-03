@@ -1,3 +1,7 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 '''
 This file is responsible for modifying the spatial layout of an existing graph
 
@@ -29,7 +33,7 @@ def forced_directed_layout(star_array, edge_data, iterations=1, repel_multiplier
         
         if(i > 0 and i % printstep == 0):
             pct = float(i) / iterations
-            print "%d%%"%(round(pct*100,0))
+            print "%.1f%%"%(round(pct*100,1))
         
         #compute repelling forces
         repel_forces = map(repel_func, xrange(len(position_array)))
@@ -136,6 +140,6 @@ def compute_global_forces(v_index, vertex_array):
     
     
     #pull this vertex towards the center disk
-    z_force += -vz * 3
+    z_force += -vz * 100
     
     return x_force, y_force, z_force
