@@ -28,6 +28,9 @@ class Vector3D(tuple):
     def length_sq(self):
         return self.dot(self, self)
     
+    def length(self):
+        return math.sqrt(self.dot(self, self))
+    
     def normalized(self):
         inv_length = 1 / math.sqrt(self.length_sq())
         return self * inv_length
