@@ -13,7 +13,7 @@ PyQt4 (to generate the galaxy image)
 
 Usage
 -----
-Navigate to the folder in a terminal and run "python main.py"
+Navigate to the folder in a terminal and run "python main.py main". Main.py implements Python's "argparse", so you can type "python main.py --help" to see a full list of options.
 
 License
 -------
