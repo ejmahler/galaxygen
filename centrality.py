@@ -8,12 +8,14 @@ This file is responsible for computing various centrality measures for a given g
 
 import networkx
 
-def compute_centrality(star_data, edge_data):
+def compute_centrality(star_dict, edge_dict):
     
     #build up a nx graph
     galaxy = networkx.Graph()
+    for v, vertex in star_dict.iteritems():
+        galaxy.add_node(v)
     
-    for v, neighbors in edge_data.iteritems():
+    for v, neighbors in edge_dict.iteritems():
         for n in neighbors:
             galaxy.add_edge(v,n)
             

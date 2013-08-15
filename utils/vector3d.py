@@ -21,9 +21,9 @@ class Vector3D(tuple):
         
     #assume vector scale with numeric type
     def __mul__(self, other):
-        return Vector3D(self[0] * other, self[1] * other, self[1] * other)
+        return Vector3D(self[0] * other, self[1] * other, self[2] * other)
     def __rmul__(self, other):
-        return Vector3D(self[0] * other, self[1] * other, self[1] * other)
+        return Vector3D(self[0] * other, self[1] * other, self[2] * other)
     
     def length_sq(self):
         return self.dot(self, self)

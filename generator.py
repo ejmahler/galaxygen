@@ -14,41 +14,49 @@ from scipy.sparse import csgraph
 from scipy.optimize import brentq
 from scipy.spatial import cKDTree as KDTree
 
+from utils.vector3d import Vector3D
+
 
 def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius, bulge_height, disk_height):
     
     #generate vertices
-    star_array = []
+    star_dict = {}
     
+    next_index = 0
     #spiral stars
     for i in xrange(int(num_stars*0.65)):
-        star_array.append(create_vertex_spiral(max_radius=galaxy_radius, arm_count=spiral_arm_count, beta=spiral_tightness, disk_height=disk_height))
+        star_dict[next_index] = create_vertex_spiral(max_radius=galaxy_radius, arm_count=spiral_arm_count, beta=spiral_tightness, disk_height=disk_height)
+        next_index += 1
     
     #inner cluster stars
     for i in xrange(int(num_stars*0.15)):
-        star_array.append(create_vertex_inner(max_radius=galaxy_radius * 0.8, bulge_height=bulge_height))
+        star_dict[next_index] = create_vertex_inner(max_radius=galaxy_radius * 0.8, bulge_height=bulge_height)
+        next_index += 1
     
     #outer "spread out" stars
-    while(len(star_array) < num_stars):
-        star_array.append(create_vertex_outer(max_radius=galaxy_radius * 0.9, disk_height=disk_height))
+    while(len(star_dict) < num_stars):
+        star_dict[next_index] = create_vertex_outer(max_radius=galaxy_radius * 0.9, disk_height=disk_height)
+        next_index += 1
     
     #generate a KDTree from the star data in order to help with edges
-    star_tree = KDTree(star_array)
+    star_keys = star_dict.keys()
+    star_values = star_dict.values()
+    star_tree = KDTree(star_values)
     
     #compute the nearest neighbors for each vertex
-    distance_data, index_data = star_tree.query(star_array, k=20, eps=0.1)
+    distance_data, index_data = star_tree.query(star_values, k=20, eps=0.1)
     
     #for each vertex, randomly add edges to its nearest neighbors
     edge_dict = {}
     for distances, indexes in zip(distance_data, index_data):
-        v1 = int(indexes[0])
+        v1 = star_keys[int(indexes[0])]
         
         if(v1 not in edge_dict):
             edge_dict[v1] = set()
         
         for distance, v2 in create_edges(zip(distances[1:],indexes[1:])):
             
-            v2 = int(v2)
+            v2 = star_keys[int(v2)]
             
             edge_dict[v1].add(v2)
             
@@ -57,14 +65,12 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
             edge_dict[v2].add(v1)
     
     #remove disconnected components from the graph
-    star_array, edge_dict = remove_diconnected_stars(star_array, edge_dict)
+    star_dict, edge_dict = remove_diconnected_stars(star_dict, edge_dict)
     
     #convert the star array to an array of dictionaries before returning, so other data can be added
-    star_array = [{'position':p} for p in star_array]
+    star_dict = {key:{'position':Vector3D(*p)} for key, p in star_dict.iteritems()}
     
-    print len(star_array)
-    
-    return star_array, edge_dict
+    return star_dict, edge_dict
 
 def create_vertex_inner(max_radius, bulge_height):
     
@@ -74,11 +80,11 @@ def create_vertex_inner(max_radius, bulge_height):
     angle = random.uniform(0, 2 * math.pi)
     
     x = math.cos(angle) * radius
-    y = math.sin(angle) * radius
+    z = math.sin(angle) * radius
     
     
-    max_z = bulge_height*20*radius_pct*(radius_pct - 1)**7
-    z = random.triangular(-max_z,max_z, 0)
+    max_y = bulge_height*20*radius_pct*(radius_pct - 1)**7
+    y = random.triangular(-max_y,max_y, 0)
     
     return (x,y,z)
 
@@ -90,10 +96,10 @@ def create_vertex_outer(max_radius, disk_height):
     angle = random.uniform(0, 2 * math.pi)
     
     x = math.cos(angle) * radius
-    y = math.sin(angle) * radius
+    z = math.sin(angle) * radius
     
-    max_z = disk_height * math.sqrt(1 - radius_pct)
-    z = random.triangular(-max_z,max_z, 0)
+    max_y = disk_height * math.sqrt(1 - radius_pct)
+    y = random.triangular(-max_y,max_y, 0)
     
     return (x,y,z)
 
@@ -110,10 +116,10 @@ def create_vertex_spiral(max_radius, disk_height, arm_count, beta):
     
     angle = base_angle + arm_angle
     x = math.cos(angle) * radius
-    y = math.sin(angle) * radius
+    z = math.sin(angle) * radius
     
-    max_z = disk_height * math.sqrt(1 - radius_pct)
-    z = random.triangular(-max_z,max_z, 0)
+    max_y = disk_height * math.sqrt(1 - radius_pct)
+    y = random.triangular(-max_y,max_y, 0)
     
     return (x,y,z)
 
@@ -132,7 +138,7 @@ def create_edges(neighbors):
     yield
 
 
-def remove_diconnected_stars(position_array, edge_dict):
+def remove_diconnected_stars(position_dict, edge_dict):
     
     #build an adjacency matrix using the scipy sparse matrix library.
     #the scipy docs recommend using dok_matrix for incrementally building a matrix like this
@@ -161,30 +167,18 @@ def remove_diconnected_stars(position_array, edge_dict):
     disconnection_set = set()
     for size,vertices in sorted_components[:-1]:
         disconnection_set.update(vertices)
-        
-    #remove stars in the disconnection set and convert the star array to an array of dictionaries before returning, so other data can be added
-    index_map = {}
-    result_array = []
-    for i, p in enumerate(position_array):
-        if(i not in disconnection_set):
-            index_map[i] = len(result_array)
-            result_array.append(p)
             
     #use the index map to convert old indexes to new indexes in the edge dict
+    new_position_dict = {}
     new_edge_dict = {}
-    for v, neighbors in edge_dict.iteritems():
+    for v, neighbors in position_dict.iteritems():
         
         if(v not in disconnection_set):
-            new_v = index_map[v]
+            new_position_dict[v] = list(position_dict[v])
+            new_edge_dict[v] = set(edge_dict[v])
             
-            if(new_v not in new_edge_dict):
-                new_edge_dict[new_v] = set()
             
-            for n in neighbors:
-                new_n = index_map[n]
-                new_edge_dict[new_v].add(new_n)
-            
-    return result_array, new_edge_dict
+    return new_position_dict, new_edge_dict
     
     
     

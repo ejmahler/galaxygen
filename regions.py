@@ -33,7 +33,7 @@ def compute_regions(star_data, edge_data, constellation_iterations=2, region_ite
                     
                 
                 if(vc == nc):
-                    weight_map[vc][nc] += 0.2 #increasing this value will make iterations less and less effective
+                    weight_map[vc][nc] += 1 #increasing this value will make iterations less and less effective
                 else:
                     weight_map[vc][nc] += 1
             
@@ -48,13 +48,13 @@ def compute_regions(star_data, edge_data, constellation_iterations=2, region_ite
             
         #if this is the contellation iteration, copy the community map into the star list's constellation data
         if(i + 1 == constellation_iterations):
-            for v, star in enumerate(star_data):
-                star['constellation'] = community_map[v]
+            for key, value in star_data.iteritems():
+                value['constellation'] = community_map[key]
                 
         #if this is the region iteration, copy the community map into the star list's region data
         if(i + 1 == region_iterations):
-            for v, star in enumerate(star_data):
-                star['region'] = community_map[v]
+            for key, value in star_data.iteritems():
+                value['region'] = community_map[key]
         
 
 #given a graph, start each vertex in its own community, and merge communities to maximize modularity

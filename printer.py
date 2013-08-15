@@ -13,11 +13,11 @@ from PyQt4.Qt import Qt
 import serialize
 from utils import gradient
 
-def print_galaxy(vertices, edges, edge=False, image_size=3200, color_type='region'):
+def print_galaxy(vertices, edges, edge=False, image_size=4800, color_type='region'):
     
     #parse options
     x_index = 0
-    y_index = 1
+    y_index = 2
     if(edge):
         y_index = 1
     
@@ -35,7 +35,7 @@ def print_galaxy(vertices, edges, edge=False, image_size=3200, color_type='regio
     painter.scale(size_ratio, size_ratio)
     
     pen = QPen(Qt.gray)
-    pen.setWidthF(1)
+    pen.setWidthF(0.4)
     painter.setPen(pen)
     
     #draw all edges
@@ -50,7 +50,7 @@ def print_galaxy(vertices, edges, edge=False, image_size=3200, color_type='regio
     
     
     #draw all vertices
-    for v in vertices:
+    for v in vertices.itervalues():
         vertex_color = get_color(v, color_type)
         
         painter.setPen(vertex_color)
@@ -58,13 +58,13 @@ def print_galaxy(vertices, edges, edge=False, image_size=3200, color_type='regio
         
         center = QPointF(v['position'][x_index],v['position'][y_index])
         
-        painter.drawEllipse(center, 5,5)
+        painter.drawEllipse(center, 2,2)
         
     painter.end()
     output_image.save("galaxy.png")
     
 def find_biggest_coord(vertices):
-    return max(max(v['position']) for v in vertices)
+    return max(max(v['position']) for v in vertices.itervalues())
 
 
 

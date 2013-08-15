@@ -14,7 +14,7 @@ def main(options):
     
     print "Generating galaxy..."
     star_array, edge_data = generator.generate_galaxy(
-        num_stars=6000, 
+        num_stars=5000, 
         galaxy_radius=2000, 
         
         spiral_arm_count=6, 
@@ -86,11 +86,22 @@ def run_centrality(options):
     printer.print_galaxy(star_array, edge_data)
     
     
-def run_json(options):
+def run_tojson(options):
     star_array, edge_data = serialize.load(options.filename)
     
     print "Writing json..."
     serialize.save_json(star_array, edge_data, options.output)
+    
+def run_fromjson(options):
+    import printer
+    
+    print "Parsing json..."
+    star_array, edge_data = serialize.load_json(options.input)
+    
+    serialize.save(star_array, edge_data, options.filename)
+    
+    print "Rendering..."
+    printer.print_galaxy(star_array, edge_data)
     
 
 if(__name__ == '__main__'):
@@ -109,7 +120,7 @@ if(__name__ == '__main__'):
     render_parser = subparsers.add_parser('render', help='Takes an existing star data set and generates an image for it')
     render_parser.add_argument('-e','--edge', help="Print the galaxy edge-on instead of top-down", action='store_true', default=False)
     render_parser.add_argument('-c','--color', help="Chooses which measure to use to color each star", type=str, default='region',choices=['security','region','betweenness'])
-    render_parser.add_argument('-s','--size', help="Width and height of the resulting image, in pixels", type=int, default=3200)
+    render_parser.add_argument('-s','--size', help="Width and height of the resulting image, in pixels", type=int, default=4800)
     render_parser.set_defaults(func=run_render)
     
     region_parser = subparsers.add_parser('region', help='Takes an existing star data set and computes regions for it')
@@ -118,9 +129,13 @@ if(__name__ == '__main__'):
     centrality_parser = subparsers.add_parser('centrality', help='Takes an existing star data set and computes centrality data for it')
     centrality_parser.set_defaults(func=run_centrality)
     
-    json_parser = subparsers.add_parser('tojson', help='Takes an existing star data set and converts it to json format')
-    json_parser.add_argument('-o','--output', help="The file to write the json to", type=str, default=serialize.default_json_filename)
-    json_parser.set_defaults(func=run_json)
+    tojson_parser = subparsers.add_parser('tojson', help='Takes an existing star data set and converts it to json format')
+    tojson_parser.add_argument('-o','--output', help="The file to write the json to", type=str, default=serialize.default_json_filename)
+    tojson_parser.set_defaults(func=run_tojson)
+    
+    fromjson_parser = subparsers.add_parser('fromjson', help="Takes a star data set in json format and converts it to this program's internal format")
+    fromjson_parser.add_argument('-i','--input', help="The file to load json from", type=str, default=serialize.default_json_filename)
+    fromjson_parser.set_defaults(func=run_fromjson)
     
     args = parser.parse_args()
     
