@@ -103,6 +103,18 @@ def run_fromjson(options):
     print "Rendering..."
     printer.print_galaxy(star_array, edge_data)
     
+def run_fromsqlite(options):
+    import generator
+    import printer
+    
+    print "Loading from sqlite..."
+    star_array, edge_data = generator.load_sqlite(options.input)
+    
+    serialize.save(star_array, edge_data, options.filename)
+    
+    print "Rendering..."
+    printer.print_galaxy(star_array, edge_data)
+    
 
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser('Functions for randomly generating a galaxy similar to the one in EVE Online')
@@ -136,6 +148,10 @@ if(__name__ == '__main__'):
     fromjson_parser = subparsers.add_parser('fromjson', help="Takes a star data set in json format and converts it to this program's internal format")
     fromjson_parser.add_argument('-i','--input', help="The file to load json from", type=str, default=serialize.default_json_filename)
     fromjson_parser.set_defaults(func=run_fromjson)
+    
+    fromdump_parser = subparsers.add_parser('fromdump', help="Loads star data from the sqlite form of EVE's static dump")
+    fromdump_parser.add_argument('input', help="The static dump filename", type=str)
+    fromdump_parser.set_defaults(func=run_fromsqlite)
     
     args = parser.parse_args()
     

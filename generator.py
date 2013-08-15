@@ -6,9 +6,9 @@
 import math
 import random
 import pprint
+import sqlite3
 
 import numpy
-
 from scipy.sparse import dok_matrix
 from scipy.sparse import csgraph
 from scipy.optimize import brentq
@@ -65,7 +65,7 @@ def generate_galaxy(num_stars, spiral_arm_count, spiral_tightness, galaxy_radius
             edge_dict[v2].add(v1)
     
     #remove disconnected components from the graph
-    star_dict, edge_dict = remove_diconnected_stars(star_dict, edge_dict)
+    star_dict, edge_dict = remove_disconnected_stars(star_dict, edge_dict)
     
     #convert the star array to an array of dictionaries before returning, so other data can be added
     star_dict = {key:{'position':Vector3D(*p)} for key, p in star_dict.iteritems()}
@@ -136,9 +136,51 @@ def create_edges(neighbors):
             
     return
     yield
+    
+    
+    
+#load data from an sqlite version of an eve data dump (intended for use with http://pozniak.pl/wp/?page_id=530)
+def load_sqlite(filename):
+    con = sqlite3.connect(filename)
+    con.row_factory = sqlite3.Row
+    cursor = con.cursor()
+    
+    #load vertices
+    vertices = {}
+    for row in cursor.execute("SELECT * FROM mapsolarsystems"):
+        vertex = {}
+        vertex['region'] = int(row['regionID'])
+        vertex['constellation'] = int(row['constellationID'])
+        vertex['name'] = row['solarSystemName']
+        vertex['security'] = row['security']
+        
+        vertex['position'] = Vector3D(row['x'], row['y'], -row['z'])#we have to flip the z axis
+        
+        vertices[int(row['solarSystemID'])] = vertex
+    
+    #load edges
+    edges = {v:set() for v in vertices.iterkeys()}
+    for row in cursor.execute("SELECT * FROM mapsolarsystemjumps"):
+        edges[row['fromSolarSystemID']].add(row['toSolarSystemID'])
+
+    #the vertices dict currently includes the wormhole systems, and we don't want those. so remove any vertex that has no edges
+    vertices, edges = remove_disconnected_stars(vertices, edges)
+    
+    #we have to normalize the position, since it's huge right now
+    #shrink everything so every vertex is at most 2000 units away
+    max_distance = max(v['position'].length() for v in vertices.itervalues())
+    multiplier = 2000/max_distance
+    for v in vertices.itervalues():
+        v['position'] *= multiplier
+        
+    return vertices, edges
 
 
-def remove_diconnected_stars(position_dict, edge_dict):
+def remove_disconnected_stars(position_dict, edge_dict):
+    
+    #create a mapping from keys to indexes and indexes back to keys
+    index_to_key = position_dict.keys()
+    key_to_index = {k:i for i,k in enumerate(index_to_key)}
     
     #build an adjacency matrix using the scipy sparse matrix library.
     #the scipy docs recommend using dok_matrix for incrementally building a matrix like this
@@ -147,17 +189,17 @@ def remove_diconnected_stars(position_dict, edge_dict):
     
     for v, neighbors in edge_dict.iteritems():
         for n in neighbors:
-            mat[v,n] = 1
+            mat[key_to_index[v],key_to_index[n]] = 1
             
     #compute the connected components
     n, component_array = csgraph.connected_components(mat)
     
     #group the vertices into their components
     component_group = dict()
-    for v, group in enumerate(component_array):
+    for index, group in enumerate(component_array):
         if(group not in component_group):
             component_group[group] = []
-        component_group[group].append(v)
+        component_group[group].append(index_to_key[index])
         
         
     #sort the components by size
@@ -174,9 +216,8 @@ def remove_diconnected_stars(position_dict, edge_dict):
     for v, neighbors in position_dict.iteritems():
         
         if(v not in disconnection_set):
-            new_position_dict[v] = list(position_dict[v])
-            new_edge_dict[v] = set(edge_dict[v])
-            
+            new_position_dict[v] = position_dict[v]
+            new_edge_dict[v] = edge_dict[v]
             
     return new_position_dict, new_edge_dict
     

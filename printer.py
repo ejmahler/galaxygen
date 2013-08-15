@@ -28,7 +28,9 @@ def print_galaxy(vertices, edges, edge=False, image_size=4800, color_type='regio
     
     #first we have to scale/translate the painter to fit all the stars in the image
     biggest_coord = find_biggest_coord(vertices)
+    print biggest_coord
     size_ratio = image_size / (biggest_coord * 2 * 1.03)
+    print size_ratio
     
     #translate the origin into the center of the image, then scale by size_ratio
     painter.translate(image_size/2, image_size/2)
