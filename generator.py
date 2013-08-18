@@ -145,10 +145,23 @@ def load_sqlite(filename):
     con.row_factory = sqlite3.Row
     cursor = con.cursor()
     
+    #create a map from region id to faction id
+    faction_map = {}
+    for row in cursor.execute("SELECT * FROM mapregions"):
+        region_id = row['regionID']
+        faction_id = row['factionID']
+        
+        #if this region doesn't have a faction, set the faction id to -1
+        if(faction_id == None):
+            faction_map[region_id] = -1
+        else:
+            faction_map[region_id] = faction_id
+    
     #load vertices
     vertices = {}
     for row in cursor.execute("SELECT * FROM mapsolarsystems"):
         vertex = {}
+        vertex['faction'] = int(faction_map[row['regionID']])
         vertex['region'] = int(row['regionID'])
         vertex['constellation'] = int(row['constellationID'])
         vertex['name'] = row['solarSystemName']
@@ -169,7 +182,7 @@ def load_sqlite(filename):
     #we have to normalize the position, since it's huge right now
     #shrink everything so every vertex is at most 2000 units away
     max_distance = max(v['position'].length() for v in vertices.itervalues())
-    multiplier = 2000/max_distance
+    multiplier = 5000/max_distance
     for v in vertices.itervalues():
         v['position'] *= multiplier
         

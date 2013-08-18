@@ -66,3 +66,4 @@ def save_json(star_dict, edge_dict, filename):
     with open(filename, 'w') as datafile:
         json.dump({'vertices':vertex_output, 'edges':edge_output}, datafile)
         
+        

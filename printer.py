@@ -28,9 +28,7 @@ def print_galaxy(vertices, edges, edge=False, image_size=4800, color_type='regio
     
     #first we have to scale/translate the painter to fit all the stars in the image
     biggest_coord = find_biggest_coord(vertices)
-    print biggest_coord
     size_ratio = image_size / (biggest_coord * 2 * 1.03)
-    print size_ratio
     
     #translate the origin into the center of the image, then scale by size_ratio
     painter.translate(image_size/2, image_size/2)
@@ -60,7 +58,7 @@ def print_galaxy(vertices, edges, edge=False, image_size=4800, color_type='regio
         
         center = QPointF(v['position'][x_index],v['position'][y_index])
         
-        painter.drawEllipse(center, 2,2)
+        painter.drawEllipse(center, 5,5)
         
     painter.end()
     output_image.save("galaxy.png")
@@ -76,7 +74,9 @@ def get_color(v, color_type):
     if(color_type == 'region'):
         return color_for_group(v['region'])
     elif(color_type == 'security'):
-        return color_for_normalized_float(0.6)
+        return color_for_normalized_float(v['security'])
+    elif(color_type == 'closeness'):
+        return color_for_normalized_float(v['closeness'])
     elif(color_type == 'betweenness'):
         return color_for_normalized_float(v['betweenness'])
 

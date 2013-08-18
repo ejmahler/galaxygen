@@ -15,7 +15,7 @@ def main(options):
     print "Generating galaxy..."
     star_array, edge_data = generator.generate_galaxy(
         num_stars=5000, 
-        galaxy_radius=2000, 
+        galaxy_radius=5000, 
         
         spiral_arm_count=6, 
         spiral_tightness=.5, 
@@ -83,7 +83,22 @@ def run_centrality(options):
     serialize.save(star_array, edge_data, options.filename)
     
     print "Rendering..."
-    printer.print_galaxy(star_array, edge_data)
+    printer.print_galaxy(star_array, edge_data, color_type='betweenness')
+    
+    
+def run_security(options):
+    import centrality
+    import printer
+    
+    star_array, edge_data = serialize.load(options.filename)
+    
+    print "Computing security..."
+    centrality.compute_security(star_array, edge_data,10,300)
+    
+    serialize.save(star_array, edge_data, options.filename)
+    
+    print "Rendering..."
+    printer.print_galaxy(star_array, edge_data, color_type='security')
     
     
 def run_tojson(options):
@@ -131,7 +146,7 @@ if(__name__ == '__main__'):
     
     render_parser = subparsers.add_parser('render', help='Takes an existing star data set and generates an image for it')
     render_parser.add_argument('-e','--edge', help="Print the galaxy edge-on instead of top-down", action='store_true', default=False)
-    render_parser.add_argument('-c','--color', help="Chooses which measure to use to color each star", type=str, default='region',choices=['security','region','betweenness'])
+    render_parser.add_argument('-c','--color', help="Chooses which measure to use to color each star", type=str, default='region',choices=['security','region','betweenness','closeness'])
     render_parser.add_argument('-s','--size', help="Width and height of the resulting image, in pixels", type=int, default=4800)
     render_parser.set_defaults(func=run_render)
     
@@ -140,6 +155,9 @@ if(__name__ == '__main__'):
     
     centrality_parser = subparsers.add_parser('centrality', help='Takes an existing star data set and computes centrality data for it')
     centrality_parser.set_defaults(func=run_centrality)
+    
+    security_parser = subparsers.add_parser('security', help='Takes an existing star data set and computes security status data for it')
+    security_parser.set_defaults(func=run_security)
     
     tojson_parser = subparsers.add_parser('tojson', help='Takes an existing star data set and converts it to json format')
     tojson_parser.add_argument('-o','--output', help="The file to write the json to", type=str, default=serialize.default_json_filename)

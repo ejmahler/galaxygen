@@ -33,7 +33,7 @@ def compute_regions(star_data, edge_data, constellation_iterations=2, region_ite
                     
                 
                 if(vc == nc):
-                    weight_map[vc][nc] += 1 #increasing this value will make iterations less and less effective
+                    weight_map[vc][nc] += 0 #increasing this value will make iterations less and less effective
                 else:
                     weight_map[vc][nc] += 1
             
